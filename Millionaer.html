@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Who Wants to Be a Millionaire</title>
+    <link href="https://fonts.googleapis.com/css2?family=Verdana:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Verdana', sans-serif;
+            background: #000;
+            overflow: hidden;
+            position: relative;
+            height: 100vh;
+        }
+
+        /* Background Image */
+        .background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('https://lh3.googleusercontent.com/d/1PCQlL-yQt5J5ZPb4x5SUjXEpwa7WHlZV');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            z-index: -2;
+        }
+
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(ellipse at center, transparent 0%, rgba(0, 10, 30, 0.7) 100%);
+            z-index: -1;
+        }
+
+        /* Main Container */
+        .game-wrapper {
+            display: flex;
+            height: 100vh;
+            padding: 20px;
+            position: relative;
+        }
+
+        /* Left Side - Money Ladder */
+        .money-ladder {
+            width: 220px;
+            background: linear-gradient(180deg, rgba(0, 20, 60, 0.9) 0%, rgba(0, 10, 30, 0.95) 100%);
+            border: 3px solid #1a4d8c;
+            border-radius: 15px;
+            padding: 20px 10px;
+            margin-right: 20px;
+            box-shadow: 0 0 30px rgba(26, 77, 140, 0.5), inset 0 0 20px rgba(0, 0, 0, 0.5);
+        }
+
+        .ladder-title {
+            text-align: center;
+            color: #ffd700;
+            font-size: 1.3rem;
+            font-weight: 900;
+            margin-bottom: 15px;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.8);
+            letter-spacing: 2px;
+        }
+
+        .ladder-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 15px;
+            margin: 3px 0;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 0.95rem;
+            transition: all 0.3s;
+        }
+
+        .ladder-item.inactive {
+            background: rgba(0, 30, 80, 0.6);
+            color: #888;
+            border: 1px solid rgba(100, 150, 200, 0.3);
+        }
+
+        .ladder-item.milestone {
+            background: linear-gradient(90deg, rgba(255, 215, 0, 0.3) 0%, rgba(255, 215, 0, 0.1) 100%);
+            color: #ffd700;
+            border: 2px solid #ffd700;
+            box-shadow: 0 0 10px rgba(255, 215, 0, 0.4);
+        }
+
+        .ladder-item.current {
+            background: linear-gradient(90deg, #ff6b00 0%, #ff8c00 100%);
+            color: #fff;
+            border: 2px solid #fff;
+            box-shadow: 0 0 20px rgba(255, 107, 0, 0.8);
+            animation: pulse 1.5s infinite;
+            transform: scale(1.05);
+        }
+
+        .ladder-item.passed {
+            background: linear-gradient(90deg, #00c853 0%, #009624 100%);
+            color: #fff;
+            border: 2px solid #69f0ae;
+        }
+
+        .ladder-number {
+            width: 30px;
+        }
+
+        .ladder-amount {
+            text-align: right;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+
+        /* Center - Game Area */
+        .game-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 20px;
+        }
+
+        /* Top Section - Lifelines & Logo */
+        .top-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .logo {
+            font-size: 2.5rem;
+            font-weight: 900;
+            color: #ffd700;
+            text-shadow: 0 0 20px rgba(255, 215, 0, 0.8), 0 0 40px rgba(255, 215, 0, 0.5);
+            letter-spacing: 3px;
+        }
+
+        .lifelines {
+            display: flex;
+            gap: 15px;
+        }
+
+        .lifeline {
+            width: 80px;
+            height: 60px;
+            background: linear-gradient(180deg, #1a4d8c 0%, #0a2850 100%);
+            border: 3px solid #ffd700;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .lifeline::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transform: rotate(45deg);
+            transition: all 0.5s;
+        }
+
+        .lifeline:hover:not(.used)::before {
+            left: 100%;
+        }
+
+        .lifeline.used {
+            opacity: 0.3;
+            cursor: not-allowed;
+            border-color: #555;
+        }
+
+        .lifeline-icon {
+            font-size: 1.8rem;
+            color: #ffd700;
+            font-weight: 900;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.8);
+        }
+
+        /* Question Box */
+        .question-container {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 20px 0;
+        }
+
+        .question-box {
+            width: 100%;
+            max-width: 900px;
+            background: linear-gradient(180deg, #000 0%, #0a1a3a 50%, #000 100%);
+            border: 4px solid #1a4d8c;
+            border-radius: 50px;
+            padding: 40px 60px;
+            text-align: center;
+            position: relative;
+            box-shadow: 0 0 40px rgba(26, 77, 140, 0.6), inset 0 0 30px rgba(0, 0, 0, 0.8);
+        }
+
+        .question-box::before,
+        .question-box::after {
+            content: '';
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80%;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, #1a4d8c, transparent);
+        }
+
+        .question-box::before {
+            top: 10px;
+        }
+
+        .question-box::after {
+            bottom: 10px;
+        }
+
+        .question-text {
+            font-size: 1.8rem;
+            color: #fff;
+            font-weight: 700;
+            line-height: 1.4;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+        }
+
+        /* Answer Buttons */
+        .answers-container {
+            width: 100%;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .answer-row {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .answer-btn {
+            flex: 1;
+            background: linear-gradient(180deg, #000 0%, #0a1a3a 50%, #000 100%);
+            border: 3px solid #1a4d8c;
+            border-radius: 40px;
+            padding: 25px 30px;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.5);
+        }
+
+        .answer-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 215, 0, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .answer-btn:hover:not(.disabled) {
+            border-color: #ffd700;
+            box-shadow: 0 0 30px rgba(255, 215, 0, 0.5);
+            transform: translateY(-3px);
+        }
+
+        .answer-btn:hover:not(.disabled)::before {
+            left: 100%;
+        }
+
+        .answer-btn.disabled {
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        .answer-btn.correct {
+            background: linear-gradient(180deg, #00c853 0%, #006009 100%);
+            border-color: #69f0ae;
+            box-shadow: 0 0 40px rgba(0, 200, 83, 0.8);
+            animation: correctPulse 0.6s;
+        }
+
+        .answer-btn.wrong {
+            background: linear-gradient(180deg, #d50000 0%, #9b0000 100%);
+            border-color: #ff5252;
+            box-shadow: 0 0 40px rgba(213, 0, 0, 0.8);
+            animation: shake 0.5s;
+        }
+
+        @keyframes correctPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-10px); }
+            40%, 80% { transform: translateX(10px); }
+        }
+
+        .answer-letter {
+            color: #ffd700;
+            font-weight: 900;
+            font-size: 1.3rem;
+            margin-right: 15px;
+        }
+
+        .answer-text {
+            color: #fff;
+            font-weight: 700;
+            font-size: 1.2rem;
+        }
+
+        .answer-btn.correct .answer-letter,
+        .answer-btn.correct .answer-text,
+        .answer-btn.wrong .answer-letter,
+        .answer-btn.wrong .answer-text {
+            color: #fff;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: linear-gradient(180deg, #0a1a3a 0%, #000 100%);
+            border: 5px solid #ffd700;
+            border-radius: 30px;
+            padding: 50px;
+            text-align: center;
+            box-shadow: 0 0 60px rgba(255, 215, 0, 0.6);
+            animation: modalPop 0.5s;
+            max-width: 600px;
+        }
+
+        @keyframes modalPop {
+            0% { transform: scale(0.5); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .modal-title {
+            font-size: 3rem;
+            font-weight: 900;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 5px;
+        }
+
+        .modal-title.correct {
+            color: #00c853;
+            text-shadow: 0 0 30px rgba(0, 200, 83, 0.8);
+        }
+
+        .modal-title.wrong {
+            color: #ff5252;
+            text-shadow: 0 0 30px rgba(255, 82, 82, 0.8);
+        }
+
+        .modal-title.win {
+            color: #ffd700;
+            text-shadow: 0 0 30px rgba(255, 215, 0, 0.8);
+        }
+
+        .modal-text {
+            font-size: 1.5rem;
+            color: #fff;
+            margin-bottom: 30px;
+        }
+
+        .modal-btn {
+            background: linear-gradient(180deg, #ffd700 0%, #ff8c00 100%);
+            border: none;
+            padding: 20px 50px;
+            font-size: 1.3rem;
+            font-weight: 900;
+            color: #000;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .modal-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 30px rgba(255, 215, 0, 0.8);
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .money-ladder {
+                width: 150px;
+            }
+            .question-text {
+                font-size: 1.4rem;
+            }
+            .answer-text {
+                font-size: 1rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .game-wrapper {
+                flex-direction: column;
+            }
+            .money-ladder {
+                width: 100%;
+                margin-right: 0;
+                margin-bottom: 20px;
+            }
+            .answer-row {
+                flex-direction: column;
+            }
+            .question-text {
+                font-size: 1.2rem;
+            }
+            .logo {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="background"></div>
+    <div class="overlay"></div>
+
+    <div class="game-wrapper">
+        <!-- Money Ladder -->
+        <div class="money-ladder" id="moneyLadder">
+            <div class="ladder-title">💰 MONEY TREE</div>
+            <!-- Generated by JavaScript -->
+        </div>
+
+        <!-- Game Area -->
+        <div class="game-area">
+            <div class="top-section">
+                <div class="logo"> MILLIONAIRE</div>
+                <div class="lifelines">
+                    <div class="lifeline" id="lifeline5050" onclick="useLifeline('5050')">
+                        <div class="lifeline-icon">50:50</div>
+                    </div>
+                    <div class="lifeline" id="lifelinePhone" onclick="useLifeline('phone')">
+                        <div class="lifeline-icon">📞</div>
+                    </div>
+                    <div class="lifeline" id="lifelineAudience" onclick="useLifeline('audience')">
+                        <div class="lifeline-icon">👥</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="question-container">
+                <div class="question-box">
+                    <div class="question-text" id="questionText">Loading question...</div>
+                </div>
+            </div>
+
+            <div class="answers-container">
+                <div class="answer-row">
+                    <button class="answer-btn" id="answer0" onclick="selectAnswer(0)">
+                        <span class="answer-letter">A:</span>
+                        <span class="answer-text" id="text0">Option A</span>
+                    </button>
+                    <button class="answer-btn" id="answer1" onclick="selectAnswer(1)">
+                        <span class="answer-letter">B:</span>
+                        <span class="answer-text" id="text1">Option B</span>
+                    </button>
+                </div>
+                <div class="answer-row">
+                    <button class="answer-btn" id="answer2" onclick="selectAnswer(2)">
+                        <span class="answer-letter">C:</span>
+                        <span class="answer-text" id="text2">Option C</span>
+                    </button>
+                    <button class="answer-btn" id="answer3" onclick="selectAnswer(3)">
+                        <span class="answer-letter">D:</span>
+                        <span class="answer-text" id="text3">Option D</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal" id="modal">
+        <div class="modal-content">
+            <div class="modal-title" id="modalTitle"></div>
+            <div class="modal-text" id="modalText"></div>
+            <button class="modal-btn" id="modalBtn" onclick="nextAction()">Continue</button>
+        </div>
+    </div>
+
+    <script>
+        const questions = [
+            // ==========================================
+            // LEVEL 1: MUDAH (Pertanyaan 1 - 5)
+            // ==========================================
+            { q: "Apa warna bendera negara Indonesia?", a: ["Merah Putih", "Biru Putih", "Hijau Kuning", "Hitam Putih"], correct: 0 },
+            { q: "Hewan apa yang terkenal suka makan pisang?", a: ["Kucing", "Ayam", "Monyet", "Ikan"], correct: 2 },
+            { q: "Apa ibu kota negara Indonesia?", a: ["Bandung", "Surabaya", "Jakarta", "Medan"], correct: 2 },
+            { q: "Siapa presiden pertama Republik Indonesia?", a: ["Soeharto", "Soekarno", "Jokowi", "Habibie"], correct: 1 },
+            { q: "Berapa jumlah hari dalam satu tahun biasa (non-kabisat)?", a: ["364", "365", "366", "367"], correct: 1 },
+
+            // ==========================================
+            // LEVEL 2: SEDANG (Pertanyaan 6 - 10)
+            // ==========================================
+            { q: "Berapa hasil dari 15 x 8?", a: ["100", "110", "120", "130"], correct: 2 },
+            { q: "Planet terbesar di dalam tata surya kita adalah?", a: ["Bumi", "Mars", "Jupiter", "Saturnus"], correct: 2 },
+            { q: "Siapa ilmuwan yang dikenal sebagai penemu lampu pijar?", a: ["Nikola Tesla", "Thomas Edison", "Albert Einstein", "Isaac Newton"], correct: 1 },
+            { q: "Lagu kebangsaan 'Indonesia Raya' diciptakan oleh?", a: ["C. Simanjuntak", "W.R. Soepratman", "Ismail Marzuki", "Kusbini"], correct: 1 },
+            { q: "Organ tubuh manusia yang berfungsi memompa darah ke seluruh tubuh adalah?", a: ["Paru-paru", "Hati", "Jantung", "Ginjal"], correct: 2 },
+
+            // ==========================================
+            // LEVEL 3: SULIT (Pertanyaan 11 - 15)
+            // ==========================================
+            { q: "Apa arti dari kata serapan 'loquacious'?", a: ["Sangat marah", "Cerewet / suka bicara", "Sangat cantik", "Pemalu"], correct: 1 },
+            { q: "Simbol kimia untuk unsur Emas pada tabel periodik adalah?", a: ["Ag", "Fe", "Au", "Hg"], correct: 2 },
+            { q: "Danau vulkanik terbesar di dunia yang terletak di Indonesia adalah?", a: ["Danau Toba", "Danau Maninjau", "Danau Singkarak", "Danau Poso"], correct: 0 },
+            { q: "Gas manakah yang populasinya paling mendominasi di atmosfer bumi?", a: ["Oksigen", "Karbondioksida", "Nitrogen", "Hidrogen"], correct: 2 },
+            { q: "Siapa penulis novel klasik Indonesia berjudul 'Bumi Manusia'?", a: ["Andrea Hirata", "Pramoedya Ananta Toer", "Sutan Takdir Alisjahbana", "Chairil Anwar"], correct: 1 },
+
+            // ==========================================
+            // LEVEL 4: SANGAT SULIT (Pertanyaan 16 - 20)
+            // ==========================================
+            { q: "Partikel subatomik yang memiliki muatan listrik positif adalah?", a: ["Elektron", "Proton", "Neutron", "Foton"], correct: 1 },
+            { q: "Negara manakah yang pertama kali memberikan pengakuan kedaulatan atas kemerdekaan Indonesia?", a: ["Mesir", "India", "Palestina", "Arab Saudi"], correct: 0 },
+            { q: "Senyawa kimia yang bertanggung jawab memberikan warna hijau pada daun adalah?", a: ["Karotenoid", "Klorofil", "Antosianin", "Xantofil"], correct: 1 },
+            { q: "Siapa ilmuwan fisika yang merumuskan Teori Relativitas Khusus dan Umum?", a: ["Max Planck", "Niels Bohr", "Albert Einstein", "Werner Heisenberg"], correct: 2 },
+            { q: "Konstanta matematika 'π' (Pi) paling mendekati bentuk pecahan biasa manakah?", a: ["21/7", "22/7", "23/7", "25/7"], correct: 1 }
+        ];
+
+        const prizes = [
+            // Level 1
+            "Rp 100.000",
+            "Rp 200.000",
+            "Rp 300.000",
+            "Rp 500.000",
+            "Rp 1.000.000", // Safe point 1
+
+            // Level 2
+            "Rp 2.000.000",
+            "Rp 3.000.000",
+            "Rp 5.000.000",
+            "Rp 7.500.000",
+            "Rp 10.000.000", // Safe point 2
+
+            // Level 3
+            "Rp 20.000.000",
+            "Rp 35.000.000",
+            "Rp 50.000.000",
+            "Rp 75.000.000",
+            "Rp 100.000.000", // Safe point 3
+
+            // Level 4
+            "Rp 200.000.000",
+            "Rp 350.000.000",
+            "Rp 500.000.000",
+            "Rp 750.000.000",
+            "Rp 1.000.000.000" // Grand Prize
+        ];
+
+        const milestones = [4, 9, 14]; // Index milestone (0-based)
+
+        let currentQuestion = 0;
+        let currentLevel = 0;
+        let lifelines = { '5050': false, 'phone': false, 'audience': false };
+        let canAnswer = true;
+
+        // Initialize Money Ladder
+        function initMoneyLadder() {
+            const ladder = document.getElementById('moneyLadder');
+            ladder.innerHTML = '<div class="ladder-title">💰 MONEY TREE</div>';
+            
+            for (let i = prizes.length - 1; i >= 0; i--) {
+                const item = document.createElement('div');
+                item.className = 'ladder-item inactive';
+                item.id = `ladder-${i}`;
+                
+                if (milestones.includes(i)) {
+                    item.classList.add('milestone');
+                }
+                
+                item.innerHTML = `
+                    <span class="ladder-number">${i + 1}</span>
+                    <span class="ladder-amount">${prizes[i]}</span>
+                `;
+                ladder.appendChild(item);
+            }
+        }
+
+        function updateMoneyLadder() {
+            for (let i = 0; i < prizes.length; i++) {
+                const item = document.getElementById(`ladder-${i}`);
+                item.className = 'ladder-item';
+                
+                if (i < currentLevel) {
+                    item.classList.add('passed');
+                } else if (i === currentLevel) {
+                    item.classList.add('current');
+                } else {
+                    item.classList.add('inactive');
+                }
+                
+                if (milestones.includes(i)) {
+                    item.classList.add('milestone');
+                }
+            }
+        }
+
+        function loadQuestion() {
+            if (currentQuestion >= questions.length) {
+                showModal('win', '🎉 JACKPOT! 🎉', 'Selamat! Anda memenangkan $1,000,000!');
+                return;
+            }
+
+            const q = questions[currentQuestion];
+            document.getElementById('questionText').textContent = q.q;
+            
+            const letters = ['A', 'B', 'C', 'D'];
+            for (let i = 0; i < 4; i++) {
+                document.getElementById(`text${i}`).textContent = q.a[i];
+                const btn = document.getElementById(`answer${i}`);
+                btn.className = 'answer-btn';
+                btn.style.visibility = 'visible';
+            }
+            
+            canAnswer = true;
+            updateMoneyLadder();
+        }
+
+        function selectAnswer(index) {
+            if (!canAnswer) return;
+            canAnswer = false;
+
+            const correct = questions[currentQuestion].correct;
+            
+            // Disable all buttons
+            for (let i = 0; i < 4; i++) {
+                document.getElementById(`answer${i}`).classList.add('disabled');
+            }
+
+            if (index === correct) {
+                document.getElementById(`answer${index}`).classList.add('correct');
+                setTimeout(() => {
+                    currentLevel++;
+                    currentQuestion++;
+                    showModal('correct', '✅ BENAR!', `Selamat! Anda memenangkan ${prizes[currentLevel - 1]}`);
+                }, 1000);
+            } else {
+                document.getElementById(`answer${index}`).classList.add('wrong');
+                document.getElementById(`answer${correct}`).classList.add('correct');
+                
+                let wonAmount = currentLevel > 0 ? prizes[currentLevel - 1] : "$0";
+                if (currentLevel > 10) wonAmount = prizes[9];
+                else if (currentLevel > 5) wonAmount = prizes[4];
+                
+                setTimeout(() => {
+                    showModal('wrong', '❌ SALAH!', `Permainan berakhir. Hadiah Anda: ${wonAmount}`);
+                }, 1500);
+            }
+        }
+
+        function useLifeline(type) {
+            if (lifelines[type] || !canAnswer) return;
+            
+            lifelines[type] = true;
+            document.getElementById(`lifeline${type === '5050' ? '5050' : type.charAt(0).toUpperCase() + type.slice(1)}`).classList.add('used');
+
+            if (type === '5050') {
+                const correct = questions[currentQuestion].correct;
+                let removed = 0;
+                for (let i = 0; i < 4 && removed < 2; i++) {
+                    if (i !== correct && Math.random() > 0.5) {
+                        document.getElementById(`answer${i}`).style.visibility = 'hidden';
+                        removed++;
+                    }
+                }
+                // Ensure exactly 2 are hidden
+                for (let i = 0; i < 4 && removed < 2; i++) {
+                    if (i !== correct && document.getElementById(`answer${i}`).style.visibility !== 'hidden') {
+                        document.getElementById(`answer${i}`).style.visibility = 'hidden';
+                        removed++;
+                    }
+                }
+            } else if (type === 'phone') {
+                const correct = questions[currentQuestion].correct;
+                const letters = ['A', 'B', 'C', 'D'];
+                alert(` Teman Anda berkata: "Saya yakin jawabannya adalah ${letters[correct]}!"`);
+            } else if (type === 'audience') {
+                const correct = questions[currentQuestion].correct;
+                const letters = ['A', 'B', 'C', 'D'];
+                let percentages = [0, 0, 0, 0];
+                let remaining = 100;
+                
+                percentages[correct] = Math.floor(Math.random() * 30) + 50;
+                remaining -= percentages[correct];
+                
+                for (let i = 0; i < 4; i++) {
+                    if (i !== correct) {
+                        if (i === 3 || correct === 3) {
+                            percentages[i] = remaining;
+                        } else {
+                            percentages[i] = Math.floor(Math.random() * remaining);
+                            remaining -= percentages[i];
+                        }
+                    }
+                }
+                
+                let result = ' Hasil voting audiens:\n\n';
+                for (let i = 0; i < 4; i++) {
+                    result += `${letters[i]}: ${percentages[i]}%\n`;
+                }
+                alert(result);
+            }
+        }
+
+        function showModal(type, title, text) {
+            const modal = document.getElementById('modal');
+            const modalTitle = document.getElementById('modalTitle');
+            const modalText = document.getElementById('modalText');
+            const modalBtn = document.getElementById('modalBtn');
+            
+            modalTitle.className = 'modal-title ' + type;
+            modalTitle.textContent = title;
+            modalText.textContent = text;
+            
+            if (type === 'win' || type === 'wrong') {
+                modalBtn.textContent = 'Main Lagi';
+                modalBtn.onclick = () => location.reload();
+            } else {
+                modalBtn.textContent = 'Lanjut';
+                modalBtn.onclick = () => {
+                    modal.classList.remove('active');
+                    loadQuestion();
+                };
+            }
+            
+            modal.classList.add('active');
+        }
+
+        function nextAction() {
+            // Handled in showModal
+        }
+
+        // Initialize game
+        initMoneyLadder();
+        loadQuestion();
+    </script>
+</body>
+</html>
